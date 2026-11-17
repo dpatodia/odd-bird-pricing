@@ -30,7 +30,7 @@ export const api = {
     const n = (rows, keys) => rows.map((r) => { const o = { ...r }; keys.forEach((k) => { if (o[k] !== null && o[k] !== undefined) o[k] = Number(o[k]); }); return o; });
     return {
       styles: n(styles, ['cost', 'target', 'mrp']), fees: kv.fees || {}, assumptions: kv.assumptions || {}, recommendation: kv.recommendation || {}, style_market: kv.style_market || {},
-      competitors: n(competitors, ['price', 'mrp', 'discount_pct', 'rating', 'reviews', 'units_badge']),
+      competitors: n(competitors, ['price', 'mrp', 'discount_pct', 'rating', 'reviews', 'units_badge', 'pockets', 'bsr']),
       snapshots: n(snapshots, ['listings', 'with_badge', 'units_min', 'median_price', 'median_mrp', 'median_discount_pct']),
       sales: n(sales, ['list_price', 'coupon_pct', 'sessions', 'units', 'ad_spend']),
     };

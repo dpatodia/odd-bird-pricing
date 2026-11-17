@@ -56,7 +56,8 @@ function drawCurve() {
 const SM = id => SMAP[id] || { market: 'tote', peers: 'Design-led canvas' };
 const MKT = () => SM(S.style).market;
 const recFor = id => (REC && REC[id] && typeof REC[id] === 'object') ? REC[id] : null;
-const peersOf = id => { const sm = SM(id); const all = COMP.filter(c => c.market === sm.market); const seg = all.filter(c => c.segment === sm.peers); return seg.length ? seg : all; };
+const segOf = id => { const sm = SM(id); const all = COMP.filter(c => c.market === sm.market); const seg = all.filter(c => c.segment === sm.peers); return seg.length ? seg : all; };
+const peersOf = id => { const sm = SM(id), seg = segOf(id); if (!sm.size) return seg; const sized = seg.filter(c => c.size_class === sm.size); return sized.length ? sized : seg; };
 const CM = () => COMP.filter(c => c.market === MKT());
 const SEG = {'Nylon / polyester pouch':'#1f6f8b', 'Cotton / canvas pouch':'#3f8f5a', 'Premium pouch':'#7a5aa6', 'Mass canvas tote':'#1f6f8b', 'Lunch / small hand-carry':'#c9772b', 'Design-led canvas':'#3f8f5a', 'Premium':'#7a5aa6'};
 function drawMap() {
@@ -100,7 +101,7 @@ function render() {
   Array.from(new Set([1299,1499,1699,1999,S.mrp])).sort((a,b)=>a-b).forEach(mrp => row(mt, [INR(mrp), ...[699,799,899,999].map(p => PCT((1 - p/mrp)*100))]));
   drawCurve(); drawMap(); fillComps(); renderDemand(); renderSales(); renderSnaps();
 }
-function fillComps() { const tb = $('comps'); tb.replaceChildren(); CM().sort((a,b) => b.units_badge - a.units_badge || a.price - b.price).forEach(c => { const a = document.createElement('a'); a.textContent = c.product; a.href = c.url; a.target = '_blank'; a.rel = 'noopener'; row(tb, [c.brand, a, c.segment, INR(c.price), INR(c.mrp), c.discount_pct + '%', c.rating.toFixed(1), fmt(c.reviews), c.units_badge ? c.units_badge + '+' : 'No badge']); }); }
+function fillComps() { const tb = $('comps'); tb.replaceChildren(); CM().sort((a,b) => b.units_badge - a.units_badge || a.price - b.price).forEach(c => { const a = document.createElement('a'); a.textContent = c.product; a.href = c.url; a.target = '_blank'; a.rel = 'noopener'; row(tb, [c.brand, a, c.segment, c.size_class ? c.size_class + (c.dims_cm ? ' (' + c.dims_cm + ' cm)' : '') : '', c.closure || '', INR(c.price), INR(c.mrp), c.discount_pct + '%', c.rating.toFixed(1), fmt(c.reviews), c.units_badge ? c.units_badge + '+' : 'No badge', c.bsr ? '#' + fmt(c.bsr) : '']); }); }
 function loadStyle(id) { const s = STYLES.find(x => x.id === id); S.style = id; S.price = s.target; S.cost = s.cost; S.slab = s.slab; S.mrp = s.mrp; syncInputs(); render(); }
 function syncInputs() { document.querySelectorAll('[data-k]').forEach(i => { i.value = S[i.dataset.k]; }); }
 document.querySelectorAll('[data-k]').forEach(i => i.oninput = (() => { const k = i.dataset.k; if (k === 'slab') S.slab = i.value; else { const v = Number(i.value); if (i.value === '' || !Number.isFinite(v) || v < 0) return; S[k] = v; } ['savemsg', 'savemsg2'].forEach(id => { $(id).textContent = ''; }); render(); }));
@@ -185,7 +186,8 @@ function renderRec() {
   const cost = S.cost, slab = S.slab, target = S.price, profitAt = x => econ(x, cost, slab).profit;
   const group = (mk.peers.length && mk.peers.every(c => c.segment === sm.peers) ? sm.peers.toLowerCase() : 'all tracked listings') + ' among ' + (sm.market === 'toiletry' ? 'toiletry bags and pouches' : 'totes');
   $('rec-style').textContent = s.name;
-  $('rec-peers').textContent = 'Closest rivals: ' + group + ', read from Amazon.in. Every figure in this section is calculated from those listings and from the price, cost and assumptions currently on this page.';
+  const seg = segOf(S.style), sized = sm.size && mk.peers.length < seg.length;
+  $('rec-peers').textContent = 'Closest rivals: ' + (sized ? sm.size + '-size ' : '') + group + (sized ? ' (' + mk.peers.length + ' of ' + seg.length + '; size taken from the dimensions each seller entered, ' + seg.filter(c => !c.size_class || c.size_class === 'unclear').length + ' left out because their dimensions are missing or implausible)' : '') + ', read from Amazon.in. Every figure in this section is calculated from those listings and from the price, cost and assumptions currently on this page.';
   $('r-count').textContent = mk.strong.length; $('r-total').textContent = mk.peers.length;
   $('r-target').textContent = INR(target);
   const launch = to99(target * 0.9), pl = profitAt(launch), pt = profitAt(target);
@@ -204,9 +206,11 @@ function renderRec() {
     $('r-mrp-why').textContent = 'off MRP. Your MRP of ' + INR(S.mrp) + ' shows ' + PCT((1 - target / S.mrp) * 100) + ' at your target; an MRP of ' + INR(mrpNeed) + ' would match the rivals.';
     $('rec-note').textContent = mk.strong.length + ' of the ' + mk.peers.length + ' closest rivals show 100 or more sales a month. They charge ' + INR(mk.ps[0]) + ' to ' + INR(mk.ps[mk.ps.length - 1]) + ', with a middle price of ' + INR(mk.price) + '. Your target of ' + INR(target) + ' is ' + (d === 0 ? 'the same as that' : INR(Math.abs(d)) + (d < 0 ? ' below that' : ' above that')) + '. At your target an order leaves ' + INR(pt) + (d === 0 ? '.' : '; at the market price it would ' + (pm < 0 ? 'lose ' + INR(Math.abs(pm)) : 'leave ' + INR(pm)) + '.');
   }
-  $('rec-caveat').textContent = sm.market === 'toiletry'
-    ? 'Caution: these rivals are cotton and canvas pouches. Nylon organisers sell in far higher volume and are a different product. A middle price says what rivals charge, not what shoppers would pay for this bag.'
-    : 'Caution: rivals are not sorted by size, so the Large and Medium Shopper are compared with the same group, and most of those rivals are shoulder totes with a zip and pockets. A middle price says what rivals charge, not what shoppers would pay for this bag.';
+  const withClosure = mk.peers.filter(c => c.closure), zips = withClosure.filter(c => /zip/i.test(c.closure)).length;
+  const feat = withClosure.length ? zips + ' of these ' + withClosure.length + ' rivals close with a zip. ' : '';
+  $('rec-caveat').textContent = 'Caution: ' + feat + (sm.market === 'toiletry'
+    ? 'These rivals are cotton and canvas pouches; nylon organisers sell in far higher volume and are a different product. '
+    : (sized ? 'Sizes come from seller-entered dimensions, which are often wrong, and the group is small. ' : 'Rivals are not sorted by size. ')) + 'A middle price says what rivals charge, not what shoppers would pay for this bag.';
 }
 function showTab(key) {
   if (key !== CUR_TAB) ['savemsg', 'savemsg2', 'addmsg'].forEach(id => { $(id).textContent = ''; });
@@ -232,7 +236,7 @@ $('a-save').onclick = async () => {
   if (STYLES.some(s => s.id === id)) return msg('A style with that name already exists.', false);
   if (n('a-mrp') < n('a-target')) return msg('MRP cannot be below the target price.', false);
   const market = $('a-market').value;
-  try { await api.addStyle({ id, name, size: $('a-size').value.trim(), cost: n('a-cost'), target: n('a-target'), slab: $('a-slab').value, mrp: n('a-mrp'), sort: STYLES.length + 1 }, { market, peers: market === 'toiletry' ? 'Cotton / canvas pouch' : 'Design-led canvas' }); CUR_TAB = 'style:' + id; await start(); } catch (x) { msg(x.message, false); }
+  try { await api.addStyle({ id, name, size: $('a-size').value.trim(), cost: n('a-cost'), target: n('a-target'), slab: $('a-slab').value, mrp: n('a-mrp'), sort: STYLES.length + 1 }, { market, peers: market === 'toiletry' ? 'Cotton / canvas pouch' : 'Design-led canvas', ...(market === 'tote' && $('a-sizeclass').value ? { size: $('a-sizeclass').value } : {}) }); CUR_TAB = 'style:' + id; await start(); } catch (x) { msg(x.message, false); }
 };
 buildTabs();
 syncInputs(); render(); showTab(CUR_TAB);

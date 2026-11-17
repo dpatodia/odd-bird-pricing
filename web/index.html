@@ -116,7 +116,7 @@
 
 <section>
   <h2>Comparable listings</h2>
-  <div class="scroll"><table><thead><tr><th>Brand</th><th>Product</th><th>Segment</th><th class="num">Price</th><th class="num">MRP</th><th class="num">Discount</th><th class="num">Rating</th><th class="num">Reviews</th><th class="num">Bought / month</th></tr></thead><tbody id="comps"></tbody></table></div>
+  <div class="scroll"><table><thead><tr><th>Brand</th><th>Product</th><th>Segment</th><th>Size (as listed)</th><th>Closure</th><th class="num">Price</th><th class="num">MRP</th><th class="num">Discount</th><th class="num">Rating</th><th class="num">Reviews</th><th class="num">Bought / month</th><th class="num">Rank in Shoes &amp; Handbags</th></tr></thead><tbody id="comps"></tbody></table></div>
 </section>
 
 </div>
@@ -159,6 +159,7 @@
     <label>MRP printed (₹)<input type="number" id="a-mrp" min="1"></label>
     <label>Chargeable weight slab<select id="a-slab"><option value="500g">Up to 500 g</option><option value="1kg" selected>500 g to 1 kg</option><option value="2kg">1 kg to 2 kg</option></select></label>
     <label>Compare against<select id="a-market"><option value="tote">Totes</option><option value="toiletry">Toiletry bags and pouches</option></select></label>
+    <label>Tote size group<select id="a-sizeclass"><option value="">Any size</option><option value="medium">Medium (longest side under 40 cm)</option><option value="large">Large (longest side 40 cm or more)</option></select></label>
     <label>&nbsp;<button id="a-save" type="button" class="primary">Add style</button></label>
   </div>
 </section>
@@ -179,7 +180,7 @@
     <li><b>The demand model starts from guesses.</b> Its starting assumptions (about 4% of visits convert at the target price; elasticity near 1.8) were chosen by Claude, not measured. Until several weeks of data arrive, its output is those guesses restated.</li>
     <li><b>The demand curve has a fixed shape.</b> The model assumes the same elasticity at every price from ₹399 to ₹999, so its view of prices far from the ones tested is unreliable. A coupon is treated as a plain price cut, which it is not.</li>
     <li><b>The demand model reads all sales changes as price effects.</b> Ads, search rank, new reviews, stock-outs and sale events also move conversion week to week.</li>
-    <li><b>Market data for the Large Shopper and Toiletry bag is thin.</b> Amazon search does not separate totes by size, so "large" comparables are totes whose titles say large; their real sizes were not checked. The 16 toiletry listings are mostly nylon organisers, a different product from a padded printed cotton pouch.</li>
+    <li><b>Market data for each style is thin.</b> Totes are split into large and medium using the dimensions each seller typed in, which are often wrong; five of the 19 design-led totes had to be left out. That leaves three rivals selling 100+ a month in each size group, too few to trust a middle price. The 16 toiletry listings are mostly nylon organisers, a different product from a padded printed cotton pouch.</li>
     <li><b>It shows profit per order, not total profit.</b> The model has no view of how many orders each price brings. ₹799 earns more per order than ₹699, but if it sells half as many units it earns less in total. Only a live price test settles this.</li>
     <li><b>Fee rates are second-hand.</b> They come from two websites that read Amazon's rate card in September and November 2026, not from Seller Central. Handbags have no row of their own in the referral table read; the 19% and the ₹1,000 threshold are taken from the wider fashion and luggage group. If the rate or threshold differs for this browse node, the ceiling and the "dead zone" move.</li>
     <li><b>The demand signal is coarse.</b> "Bought in past month" is a floor shown in steps (50+, 100+, 200+). Listings with no badge may sell 0 or 49. The badge can also belong to a whole variation family, not the one colour shown. Best-seller rank and price history were not collected.</li>
