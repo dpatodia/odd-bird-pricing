@@ -22,9 +22,9 @@ export const api = {
   async signOut() { if (DEMO) { demo.user = null; return; } await sb.auth.signOut(); },
   async loadAll() {
     if (DEMO) return JSON.parse(JSON.stringify(demo.data));
-    const [styles, settings, competitors, snapshots, sales] = await Promise.all([
+    const [styles, settings, competitors, snapshots, sales, search] = await Promise.all([
       sb.from('styles').select('*').order('sort'), sb.from('settings').select('key,value'),
-      sb.from('competitors').select('*'), sb.from('snapshots').select('*'), sb.from('sales').select('*').order('week_start'),
+      sb.from('competitors').select('*'), sb.from('snapshots').select('*'), sb.from('sales').select('*').order('week_start'), sb.from('search_terms').select('*').order('rank'),
     ]).then((r) => r.map(must));
     const kv = Object.fromEntries(settings.map((s) => [s.key, s.value]));
     const n = (rows, keys) => rows.map((r) => { const o = { ...r }; keys.forEach((k) => { if (o[k] !== null && o[k] !== undefined) o[k] = Number(o[k]); }); return o; });
@@ -33,6 +33,7 @@ export const api = {
       competitors: n(competitors, ['price', 'mrp', 'discount_pct', 'rating', 'reviews', 'units_badge', 'pockets', 'bsr']),
       snapshots: n(snapshots, ['listings', 'with_badge', 'units_min', 'median_price', 'median_mrp', 'median_discount_pct']),
       sales: n(sales, ['list_price', 'coupon_pct', 'sessions', 'units', 'ad_spend']),
+      search_terms: n(search, ['rank', 'click_share', 'conv_share']),
     };
   },
   async team() {
@@ -48,6 +49,17 @@ export const api = {
     must(await sb.from('styles').insert(style));
     const cur = must(await sb.from('settings').select('value').eq('key', 'style_market').maybeSingle());
     must(await sb.from('settings').upsert({ key: 'style_market', value: { ...((cur && cur.value) || {}), [style.id]: map }, updated_at: new Date().toISOString() }, { onConflict: 'key' }));
+  },
+  async importData(data) {
+    const keys = { competitors: 'asin', snapshots: 'week_start,segment', search_terms: 'week_start,term', sales: 'week_start,style' };
+    const done = [];
+    for (const t of Object.keys(keys)) {
+      const rows = data[t];
+      if (!Array.isArray(rows) || !rows.length) continue;
+      if (DEMO) { demo.data[t] = (demo.data[t] || []).concat(rows); } else { must(await sb.from(t).upsert(rows, { onConflict: keys[t] })); }
+      done.push(rows.length + ' ' + t.replace('_', ' '));
+    }
+    return done;
   },
   async saveSale(row) {
     if (DEMO) { demo.data.sales = demo.data.sales.filter((r) => !(r.week_start === row.week_start && r.style === row.style)).concat([row]); return; }

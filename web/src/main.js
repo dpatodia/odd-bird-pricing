@@ -2,7 +2,7 @@ import './styles.css';
 import { api, DEMO } from './api.js';
 
 const $ = id => document.getElementById(id);
-let COMP = [], FEES = {}, REC = {}, STYLES = [], SALES = [], SNAPS = [], ASSUME = {}, SMAP = {}, ME = null, CUR_TAB = 'overview';
+let COMP = [], FEES = {}, REC = {}, STYLES = [], SALES = [], SNAPS = [], ASSUME = {}, SMAP = {}, SEARCH = [], ME = null, CUR_TAB = 'overview';
 
 function boot() {
 const M0 = STYLES.find(s => s.id === (CUR_TAB.startsWith('style:') ? CUR_TAB.slice(6) : 'medium')) || STYLES[0];
@@ -222,7 +222,7 @@ function showTab(key) {
   window.scrollTo(0, 0);
 }
 function buildTabs() {
-  const defs = [['overview', 'Overview'], ...STYLES.map(s => ['style:' + s.id, s.name]), ['assumptions', 'Assumptions'], ['weaknesses', 'Weaknesses']];
+  const defs = [['overview', 'Overview'], ...STYLES.map(s => ['style:' + s.id, s.name]), ['search', 'Search demand'], ['assumptions', 'Assumptions'], ['weaknesses', 'Weaknesses']];
   $('tabs').replaceChildren(...defs.map(([k, label]) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.key = k; b.textContent = label; b.onclick = () => showTab(k); return b; }));
   if (!defs.some(d => d[0] === CUR_TAB)) CUR_TAB = 'overview';
 }
@@ -239,6 +239,29 @@ $('a-save').onclick = async () => {
   try { await api.addStyle({ id, name, size: $('a-size').value.trim(), cost: n('a-cost'), target: n('a-target'), slab: $('a-slab').value, mrp: n('a-mrp'), sort: STYLES.length + 1 }, { market, peers: market === 'toiletry' ? 'Cotton / canvas pouch' : 'Design-led canvas', ...(market === 'tote' && $('a-sizeclass').value ? { size: $('a-sizeclass').value } : {}) }); CUR_TAB = 'style:' + id; await start(); } catch (x) { msg(x.message, false); }
 };
 buildTabs();
+
+function renderSearch() {
+  const weeks = Array.from(new Set(SEARCH.map(r => r.week_start))).sort().reverse();
+  const sel = $('st-week'), keep = sel.value;
+  sel.replaceChildren(...weeks.map(w => new Option(w, w))); if (weeks.includes(keep)) sel.value = keep;
+  const wk = sel.value, prevWk = weeks[weeks.indexOf(wk) + 1], mk = $('st-market').value;
+  const prev = Object.fromEntries(SEARCH.filter(r => r.week_start === prevWk).map(r => [r.term, r.rank]));
+  const tb = $('st-rows'); tb.replaceChildren();
+  const rows = SEARCH.filter(r => r.week_start === wk && (!mk || r.market === mk)).sort((a, b) => a.rank - b.rank);
+  if (!rows.length) { const tr = row(tb, ['No search-term data loaded yet.']); tr.firstChild.colSpan = 7; tr.firstChild.className = 'muted'; return; }
+  rows.forEach(r => { const p = prev[r.term]; const ch = p ? (p === r.rank ? 'no change' : (p > r.rank ? 'up ' : 'down ') + fmt(Math.abs(p - r.rank)) + ' places') : (prevWk ? 'new' : '');
+    const tr = row(tb, [r.term, fmt(r.rank), ch, r.brands || '', r.top_title || '', r.click_share === null || r.click_share === undefined ? '' : r.click_share + '%', r.conv_share === null || r.conv_share === undefined ? '' : r.conv_share + '%']);
+    [1, 2, 5, 6].forEach(i => { tr.children[i].className = 'num'; }); });
+}
+$('st-market').onchange = renderSearch; $('st-week').onchange = renderSearch;
+$('import-section').hidden = ME.role !== 'admin';
+$('imp-export').onclick = () => { $('imp-text').value = JSON.stringify({ competitors: COMP.map(c => ({ asin: c.asin, brand: c.brand, product: c.product, segment: c.segment, market: c.market, price: c.price, mrp: c.mrp, discount_pct: c.discount_pct, rating: c.rating, reviews: c.reviews, units_badge: c.units_badge, bsr: c.bsr || null, size_class: c.size_class || null, read_on: c.read_on })) }); };
+$('imp-run').onclick = async () => {
+  const msg = (t, ok) => { $('impmsg').textContent = t; $('impmsg').className = 'msg' + (ok ? ' ok' : ''); };
+  let data; try { data = JSON.parse($('imp-text').value); } catch (x) { return msg('That is not valid JSON: ' + x.message, false); }
+  try { const done = await api.importData(data); if (!done.length) return msg('Nothing to import: no competitors, snapshots, search_terms or sales rows found.', false); $('imp-text').value = ''; await start(); $('impmsg').textContent = 'Imported ' + done.join(', ') + '.'; $('impmsg').className = 'msg ok'; } catch (x) { msg(x.message, false); }
+};
+renderSearch();
 syncInputs(); render(); showTab(CUR_TAB);
 }
 
@@ -248,7 +271,7 @@ async function start() {
   if (!ME || !ME.approved) return;
   $('who').textContent = ME.name + ' (' + ME.role + ')' + (DEMO ? ' · demo mode' : '');
   const d = await api.loadAll();
-  COMP = d.competitors; FEES = d.fees; REC = d.recommendation; STYLES = d.styles; SALES = d.sales; SNAPS = d.snapshots; ASSUME = d.assumptions; SMAP = d.style_market || {};
+  COMP = d.competitors; FEES = d.fees; REC = d.recommendation; STYLES = d.styles; SALES = d.sales; SNAPS = d.snapshots; ASSUME = d.assumptions; SMAP = d.style_market || {}; SEARCH = d.search_terms || [];
   if (!STYLES.length) { $('app').textContent = 'No bag styles are set up yet. Ask the admin to run the setup.'; return; }
   boot();
 }

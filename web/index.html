@@ -121,6 +121,16 @@
 
 </div>
 
+<div data-tab="search" class="tab" hidden>
+<section>
+  <h2>What shoppers search for on Amazon.in</h2>
+  <p class="muted">From Amazon Brand Analytics (Top Search Terms, India). Rank 1 is the most-searched term on Amazon.in that week, so a lower number means more searches. Amazon gives ranks, not search counts. Click share and conversion share are for the single most-clicked product on that term.</p>
+  <p><label class="muted">Show <select id="st-market"><option value="">All terms</option><option value="tote">Tote terms</option><option value="toiletry">Toiletry and pouch terms</option></select></label> <label class="muted">Week starting <select id="st-week"></select></label></p>
+  <div class="scroll"><table><thead><tr><th>Search term</th><th class="num">Rank</th><th class="num">Change from previous week</th><th>Brands getting the clicks</th><th>Most-clicked product</th><th class="num">Its click share</th><th class="num">Its conversion share</th></tr></thead><tbody id="st-rows"></tbody></table></div>
+  <p class="muted">One week of ranks is a snapshot; ranks move, especially around sale events. A 0% conversion share on a low-ranked term can simply mean very few clicks.</p>
+</section>
+</div>
+
 <div data-tab="assumptions" class="tab" hidden>
 <section>
   <h2>Shared assumptions (apply to every style)</h2>
@@ -162,6 +172,13 @@
     <label>Tote size group<select id="a-sizeclass"><option value="">Any size</option><option value="medium">Medium (longest side under 40 cm)</option><option value="large">Large (longest side 40 cm or more)</option></select></label>
     <label>&nbsp;<button id="a-save" type="button" class="primary">Add style</button></label>
   </div>
+</section>
+
+<section id="import-section" hidden>
+  <h2>Weekly data import</h2>
+  <p class="muted">Used by the weekly Claude job to load competitor prices, snapshots, search terms and sales. Rows with the same key replace existing ones. <span id="impmsg" class="msg"></span></p>
+  <textarea id="imp-text" rows="6" style="width:100%;font:13px/1.4 monospace;border:1px solid var(--line);border-radius:6px;padding:8px" placeholder='{"competitors":[...],"snapshots":[...],"search_terms":[...],"sales":[...]}'></textarea>
+  <p><button id="imp-run" type="button" class="primary">Import</button> <button id="imp-export" type="button">Show tracked listings</button></p>
 </section>
 
 <section id="team-section" hidden>
