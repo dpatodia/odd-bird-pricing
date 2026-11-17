@@ -54,3 +54,18 @@ td select { font:inherit; }
 .tabs button.on { border-color:var(--line); background:var(--panel); color:var(--fg); font-weight:600; }
 .tab { display:flex; flex-direction:column; gap:34px; }
 .controls input[type=text] { font:inherit; color:var(--fg); background:#fff; border:1px solid var(--line); border-radius:6px; padding:6px 8px; width:100%; }
+
+html, body { max-width:100%; overflow-x:hidden; }
+.wrap, .tab, .tab > section, .cards > *, .two > *, .controls > * { min-width:0; }
+.scroll { max-width:100%; -webkit-overflow-scrolling:touch; }
+.two { grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); }
+.controls { grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); }
+.cards { grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr)); }
+.big { overflow-wrap:anywhere; }
+@media (max-width:640px) {
+  .wrap { padding:18px 14px 48px; gap:26px; }
+  h1 { font-size:24px; }
+  .big { font-size:24px; }
+  input, select, button { font-size:16px !important; }
+  .tabs button { padding:8px 10px; }
+}

@@ -103,7 +103,7 @@ function render() {
 function fillComps() { const tb = $('comps'); tb.replaceChildren(); CM().sort((a,b) => b.units_badge - a.units_badge || a.price - b.price).forEach(c => { const a = document.createElement('a'); a.textContent = c.product; a.href = c.url; a.target = '_blank'; a.rel = 'noopener'; row(tb, [c.brand, a, c.segment, INR(c.price), INR(c.mrp), c.discount_pct + '%', c.rating.toFixed(1), fmt(c.reviews), c.units_badge ? c.units_badge + '+' : 'No badge']); }); }
 function loadStyle(id) { const s = STYLES.find(x => x.id === id); S.style = id; S.price = s.target; S.cost = s.cost; S.slab = s.slab; S.mrp = s.mrp; syncInputs(); render(); }
 function syncInputs() { document.querySelectorAll('[data-k]').forEach(i => { i.value = S[i.dataset.k]; }); }
-document.querySelectorAll('[data-k]').forEach(i => i.oninput = (() => { const k = i.dataset.k; if (k === 'slab') S.slab = i.value; else { const v = Number(i.value); if (i.value === '' || !Number.isFinite(v) || v < 0) return; S[k] = v; } render(); }));
+document.querySelectorAll('[data-k]').forEach(i => i.oninput = (() => { const k = i.dataset.k; if (k === 'slab') S.slab = i.value; else { const v = Number(i.value); if (i.value === '' || !Number.isFinite(v) || v < 0) return; S[k] = v; } ['savemsg', 'savemsg2'].forEach(id => { $(id).textContent = ''; }); render(); }));
 $('s-style').replaceChildren(...STYLES.map(s => new Option(s.name, s.id)));
 $('reset').onclick = () => { S = Object.assign({}, DEF); syncInputs(); render(); };
 
@@ -188,13 +188,14 @@ function renderRec() {
     $('r-smrp').textContent = INR(rc.mrp); $('r-sdisc').textContent = PCT((1 - rc.sweet / rc.mrp) * 100) + ' off at the suggested price';
     $('r-launch').textContent = INR(rc.launch);
     const d = s.target - rc.sweet; $('r-gap').textContent = d === 0 ? 'same as the suggested price' : INR(Math.abs(d)) + (d < 0 ? ' below' : ' above') + ' the suggested price';
-    $('rec-note').textContent = rc.note || ''; $('rec-note').hidden = !rc.note;
+    $('rec-note').textContent = (rc.note || '').replace(/Rs /g, '₹'); $('rec-note').hidden = !rc.note;
   } else {
     ['r-sweet', 'r-smrp', 'r-launch'].forEach(id => { $(id).textContent = 'Not set'; }); $('r-conf').textContent = 'No suggestion'; $('r-band').textContent = ''; $('r-sdisc').textContent = ''; $('r-gap').textContent = '';
     $('rec-note').textContent = 'No suggested price has been set for this style yet. The rival figures above are computed from the tracked listings.'; $('rec-note').hidden = false;
   }
 }
 function showTab(key) {
+  if (key !== CUR_TAB) ['savemsg', 'savemsg2', 'addmsg'].forEach(id => { $(id).textContent = ''; });
   CUR_TAB = key;
   const panel = key.startsWith('style:') ? 'style' : key;
   if (panel === 'style' && S.style !== key.slice(6)) loadStyle(key.slice(6));
