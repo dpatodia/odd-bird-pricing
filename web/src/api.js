@@ -29,7 +29,7 @@ export const api = {
     const kv = Object.fromEntries(settings.map((s) => [s.key, s.value]));
     const n = (rows, keys) => rows.map((r) => { const o = { ...r }; keys.forEach((k) => { if (o[k] !== null && o[k] !== undefined) o[k] = Number(o[k]); }); return o; });
     return {
-      styles: n(styles, ['cost', 'target', 'mrp']), fees: kv.fees || {}, assumptions: kv.assumptions || {}, recommendation: kv.recommendation || {},
+      styles: n(styles, ['cost', 'target', 'mrp']), fees: kv.fees || {}, assumptions: kv.assumptions || {}, recommendation: kv.recommendation || {}, style_market: kv.style_market || {},
       competitors: n(competitors, ['price', 'mrp', 'discount_pct', 'rating', 'reviews', 'units_badge']),
       snapshots: n(snapshots, ['listings', 'with_badge', 'units_min', 'median_price', 'median_mrp', 'median_discount_pct']),
       sales: n(sales, ['list_price', 'coupon_pct', 'sessions', 'units', 'ad_spend']),
@@ -42,6 +42,12 @@ export const api = {
   async setApproved(id, approved) {
     if (DEMO) return;
     must(await sb.from('profiles').update({ approved }).eq('id', id));
+  },
+  async addStyle(style, map) {
+    if (DEMO) { demo.data.styles.push(style); demo.data.style_market = { ...(demo.data.style_market || {}), [style.id]: map }; return; }
+    must(await sb.from('styles').insert(style));
+    const cur = must(await sb.from('settings').select('value').eq('key', 'style_market').maybeSingle());
+    must(await sb.from('settings').upsert({ key: 'style_market', value: { ...((cur && cur.value) || {}), [style.id]: map }, updated_at: new Date().toISOString() }, { onConflict: 'key' }));
   },
   async saveSale(row) {
     if (DEMO) { demo.data.sales = demo.data.sales.filter((r) => !(r.week_start === row.week_start && r.style === row.style)).concat([row]); return; }

@@ -19,60 +19,63 @@
 <div id="app" hidden>
 <div class="wrap">
 <div class="topbar"><b>Odd Bird pricing</b><span><span id="who" class="muted"></span> <button id="signout" type="button">Sign out</button></span></div>
+<nav class="tabs" id="tabs"></nav>
+
+<div data-tab="overview" class="tab">
 <header>
-  <h1>Odd Bird pricing on Amazon.in: Large Shopper, Medium Shopper, Toiletry bag</h1>
-  <p class="lede">At your target prices, each order shipped leaves <b id="l-large"></b> on the Large Shopper at <span id="l-large-p"></span>, <b id="l-medium"></b> on the Medium Shopper at <span id="l-medium-p"></span> and <b id="l-toiletry"></b> on the Toiletry bag at <span id="l-toiletry-p"></span>, after Amazon fees, GST, ads, returns and product cost. Do not price any style between ₹1,001 and <b id="t-dead"></b>.</p>
+  <h1>Odd Bird pricing on Amazon.in</h1>
+  <p class="lede" id="lede"></p>
+  <p class="muted">Do not price any style between ₹1,001 and <b id="t-dead"></b>: above ₹1,000 the referral fee takes more than the extra price brings in.</p>
   <p class="muted">Prepared 16 November 2026. Competitor prices were read from Amazon.in search results that day. Fee rates come from secondary sources and must be checked in Seller Central before a price is committed. Changes to the inputs are what-ifs on your screen only, unless an admin saves them as team defaults.</p>
 </header>
 
 <section>
-  <h2>Your three target prices, tested</h2>
-  <p class="muted">Each style uses its own cost, target price and shipping slab, and the shared assumptions below. "Load" puts a style into the calculator.</p>
+  <h2>Your target prices, tested</h2>
+  <p class="muted">Each style uses its own cost, target price and shipping slab, and the shared assumptions below. "Open" goes to that style's tab.</p>
   <div class="scroll"><table><thead><tr><th>Style</th><th>Size</th><th class="num">Cost</th><th class="num">Target price</th><th>Shipping slab</th><th class="num">Profit per order</th><th class="num">% of price</th><th class="num">Profit at +₹100</th><th class="num">Profit at ₹999</th><th class="num">MRP to print</th><th class="num">Discount shown</th><th></th></tr></thead><tbody id="styles"></tbody></table></div>
   <p class="muted">Suggested MRPs keep the shown discount near the 50 to 55% that competing totes show. The Toiletry bag MRP and all shipping slabs are guesses until packed sizes are measured.</p>
 </section>
 
 <section>
-  <h2>Medium Shopper: what the market data supports</h2>
-  <p class="muted">Read from the competitor data below: where design-led canvas totes with sales badges are priced, and what MRP and discount they show.</p>
-  <div class="cards">
-  <div class="card"><div class="label">Market-supported price</div><div class="big" id="c-sweet"></div><span class="tag">Likely</span></div>
-  <div class="card"><div class="label">MRP to print</div><div class="big" id="c-mrp"></div><span class="tag">Likely</span></div>
-  <div class="card"><div class="label">Discount shown at target</div><div class="big" id="c-disc"></div><span class="muted">Design-led rivals: median <span id="c-rivaldisc"></span></span></div>
-  <div class="card"><div class="label">Launch price, first 30 to 60 days</div><div class="big" id="c-launch"></div><span class="tag">Guessing</span></div>
-  <div class="card"><div class="label">Hard ceiling</div><div class="big" id="c-ceiling"></div><span class="muted">Referral fee starts above the threshold</span></div>
-  </div>
+  <h2>Weekly sales (add or correct a week)</h2>
+  <p class="muted">One row per style per week, from Seller Central. Saving a week that already exists replaces it. <span id="salemsg" class="msg"></span></p>
+  <div class="scroll"><table><thead><tr><th>Week starting (Monday)</th><th>Style</th><th class="num">List price</th><th class="num">Coupon %</th><th class="num">Sessions</th><th class="num">Units</th><th class="num">Ad spend</th><th class="num">Conversion</th><th>Source</th><th></th></tr></thead>
+  <tbody id="sales"></tbody>
+  <tfoot><tr><td><input type="date" id="s-week" style="width:10em"></td><td><select id="s-style"></select></td><td><input type="number" id="s-price" min="1"></td><td><input type="number" id="s-coupon" min="0" max="90" value="0"></td><td><input type="number" id="s-sessions" min="0"></td><td><input type="number" id="s-units" min="0"></td><td><input type="number" id="s-ads" min="0" value="0"></td><td></td><td></td><td><button id="s-save" type="button" class="primary">Save week</button></td></tr></tfoot></table></div>
 </section>
 
 <section>
-  <h2>Assumptions (edit any of them)</h2>
-  <p class="muted">Every number the model uses is here. Change one and the whole page recalculates. <button id="reset" type="button">Reset to team defaults</button> <button id="savedef" type="button" class="primary" hidden>Save as team defaults</button> <span id="savemsg" class="msg"></span></p>
-  <div class="controls" id="controls">
-    <h3>Your decisions and costs</h3>
-    <label>Bag style<select id="style"></select></label>
+  <h2>Weekly competitor snapshots</h2>
+  <p class="muted">History builds forward from 16 November 2026, one row per segment per week.</p>
+  <div class="scroll"><table><thead><tr><th>Week of</th><th>Segment</th><th class="num">Listings</th><th class="num">With sales badge</th><th class="num">Units / month, at least</th><th class="num">Median price</th><th class="num">Median MRP</th><th class="num">Median discount</th></tr></thead><tbody id="snaps"></tbody></table></div>
+</section>
+
+</div>
+
+<div data-tab="style" class="tab" hidden>
+<section>
+  <h2><span id="rec-style"></span>: what the market data supports</h2>
+  <p class="muted" id="rec-peers"></p>
+  <div class="cards">
+    <div class="card"><div class="label">Closest rivals with a sales badge</div><div class="big" id="r-count"></div><span class="muted">of <span id="r-total"></span> tracked</span></div>
+    <div class="card"><div class="label">Their price range</div><div class="big" id="r-range" style="font-size:22px"></div><span class="muted">median <span id="r-median"></span></span></div>
+    <div class="card"><div class="label">Their median MRP</div><div class="big" id="r-mrp"></div><span class="muted">median discount <span id="r-disc"></span></span></div>
+    <div class="card"><div class="label">Suggested selling price</div><div class="big" id="r-sweet"></div><span class="tag" id="r-conf"></span> <span class="muted" id="r-band"></span></div>
+    <div class="card"><div class="label">Suggested MRP</div><div class="big" id="r-smrp"></div><span class="muted" id="r-sdisc"></span></div>
+    <div class="card"><div class="label">Suggested launch price</div><div class="big" id="r-launch"></div><span class="tag">Guessing</span></div>
+    <div class="card"><div class="label">Your target</div><div class="big" id="r-target"></div><span class="muted" id="r-gap"></span></div>
+  </div>
+  <p class="callout" id="rec-note"></p>
+</section>
+
+<section>
+  <h2>Price, cost and MRP for this style</h2>
+  <p class="muted">Changes here are what-ifs on your screen. <button id="savedef2" type="button" class="primary" hidden>Save as team defaults</button> <span id="savemsg2" class="msg"></span></p>
+  <div class="controls">
     <label>Selling price (₹)<input type="number" data-k="price" min="1" step="10"></label>
     <label>Landed cost per bag (₹)<input type="number" data-k="cost" min="0" step="5"></label>
     <label>MRP printed (₹)<input type="number" data-k="mrp" min="1" step="50"></label>
-    <h3>Guesses to replace with real data after month one</h3>
-    <label>Ad spend, % of selling price<input type="number" data-k="ads" min="0" step="1"></label>
-    <label>Orders returned, %<input type="number" data-k="returns" min="0" step="1"></label>
-    <label>Orders shipped nationally, %<input type="number" data-k="national" min="0" max="100" step="5"></label>
     <label>Chargeable weight slab<select data-k="slab"><option value="500g">Up to 500 g</option><option value="1kg">500 g to 1 kg</option><option value="2kg">1 kg to 2 kg</option></select></label>
-    <h3>Amazon fees and tax (secondary sources; verify in Seller Central)</h3>
-    <label>Referral fee threshold (₹)<input type="number" data-k="referral_threshold" min="0" step="50"></label>
-    <label>Referral fee above threshold, %<input type="number" data-k="referral_rate_above" min="0" step="0.5"></label>
-    <label>Closing fee, up to ₹300<input type="number" data-k="closing_0_300" min="0" step="1"></label>
-    <label>Closing fee, ₹301 to 500<input type="number" data-k="closing_301_500" min="0" step="1"></label>
-    <label>Closing fee, ₹501 to 1,000<input type="number" data-k="closing_501_1000" min="0" step="1"></label>
-    <label>Closing fee, above ₹1,000<input type="number" data-k="closing_above_1000" min="0" step="1"></label>
-    <label>Weight handling, first 500 g, regional<input type="number" data-k="wh_500g_regional" min="0" step="1"></label>
-    <label>Weight handling, first 500 g, national<input type="number" data-k="wh_500g_national" min="0" step="1"></label>
-    <label>Weight handling, 500 g to 1 kg, regional<input type="number" data-k="wh_1kg_regional" min="0" step="1"></label>
-    <label>Weight handling, 500 g to 1 kg, national<input type="number" data-k="wh_1kg_national" min="0" step="1"></label>
-    <label>Weight handling, 1 to 2 kg, regional<input type="number" data-k="wh_2kg_regional" min="0" step="1"></label>
-    <label>Weight handling, 1 to 2 kg, national<input type="number" data-k="wh_2kg_national" min="0" step="1"></label>
-    <label>Pick and pack (₹)<input type="number" data-k="pick_pack" min="0" step="1"></label>
-    <label>GST included in selling price, %<input type="number" data-k="gst_output" min="0" step="0.5"></label>
   </div>
 </section>
 
@@ -93,17 +96,71 @@
 </section>
 
 <section>
-  <h2>Weekly sales (add or correct a week)</h2>
-  <p class="muted">One row per style per week, from Seller Central. Saving a week that already exists replaces it. <span id="salemsg" class="msg"></span></p>
-  <div class="scroll"><table><thead><tr><th>Week starting (Monday)</th><th>Style</th><th class="num">List price</th><th class="num">Coupon %</th><th class="num">Sessions</th><th class="num">Units</th><th class="num">Ad spend</th><th class="num">Conversion</th><th>Source</th><th></th></tr></thead>
-  <tbody id="sales"></tbody>
-  <tfoot><tr><td><input type="date" id="s-week" style="width:10em"></td><td><select id="s-style"></select></td><td><input type="number" id="s-price" min="1"></td><td><input type="number" id="s-coupon" min="0" max="90" value="0"></td><td><input type="number" id="s-sessions" min="0"></td><td><input type="number" id="s-units" min="0"></td><td><input type="number" id="s-ads" min="0" value="0"></td><td></td><td></td><td><button id="s-save" type="button" class="primary">Save week</button></td></tr></tfoot></table></div>
+  <h2>Where comparable products sell, and at what price</h2>
+  <p class="muted">Each dot is one listing. Height is the "bought in past month" badge. Dot size is review count. The shaded band is the recommended range; the dashed line is the referral fee threshold.</p>
+  <div class="legend" id="legend-toiletry" hidden><span><i class="dot" style="background:#1f6f8b"></i>Nylon / polyester pouch</span><span><i class="dot" style="background:#3f8f5a"></i>Cotton / canvas pouch</span><span><i class="dot" style="background:#7a5aa6"></i>Premium pouch</span></div>
+  <div class="legend" id="legend-tote"><span><i class="dot" style="background:#1f6f8b"></i>Mass canvas tote</span><span><i class="dot" style="background:#c9772b"></i>Lunch / small hand-carry</span><span><i class="dot" style="background:#3f8f5a"></i>Design-led canvas</span><span><i class="dot" style="background:#7a5aa6"></i>Premium</span></div>
+  <div class="chart" id="map"></div>
 </section>
 
 <section>
-  <h2>Weekly competitor snapshots</h2>
-  <p class="muted">History builds forward from 16 November 2026, one row per segment per week.</p>
-  <div class="scroll"><table><thead><tr><th>Week of</th><th>Segment</th><th class="num">Listings</th><th class="num">With sales badge</th><th class="num">Units / month, at least</th><th class="num">Median price</th><th class="num">Median MRP</th><th class="num">Median discount</th></tr></thead><tbody id="snaps"></tbody></table></div>
+  <h2>Demand and discounting by price band</h2>
+  <div class="scroll"><table><thead><tr><th>Price band</th><th class="num">Listings</th><th class="num">With sales badge</th><th class="num">Units / month, at least</th><th class="num">Median MRP</th><th class="num">Median discount</th></tr></thead><tbody id="bands"></tbody></table></div>
+</section>
+
+<section>
+  <h2>Choosing the MRP</h2>
+  <p class="muted">Discount the shopper sees at each selling price. For the market selected above, the closest rivals show a median MRP of <span id="m-rivalmrp"></span> and a median discount of <span id="m-rivaldisc"></span>.</p>
+  <div class="scroll"><table><thead><tr><th>MRP printed</th><th class="num">At ₹699</th><th class="num">At ₹799</th><th class="num">At ₹899</th><th class="num">At ₹999</th></tr></thead><tbody id="mrpgrid"></tbody></table></div>
+</section>
+
+<section>
+  <h2>Comparable listings</h2>
+  <div class="scroll"><table><thead><tr><th>Brand</th><th>Product</th><th>Segment</th><th class="num">Price</th><th class="num">MRP</th><th class="num">Discount</th><th class="num">Rating</th><th class="num">Reviews</th><th class="num">Bought / month</th></tr></thead><tbody id="comps"></tbody></table></div>
+</section>
+
+</div>
+
+<div data-tab="assumptions" class="tab" hidden>
+<section>
+  <h2>Shared assumptions (apply to every style)</h2>
+  <p class="muted">Every number the model uses is here. Change one and the whole page recalculates. <button id="reset" type="button">Reset to team defaults</button> <button id="savedef" type="button" class="primary" hidden>Save as team defaults</button> <span id="savemsg" class="msg"></span></p>
+  <div class="controls" id="controls">
+    <h3>Guesses to replace with real data after month one</h3>
+    <label>Ad spend, % of selling price<input type="number" data-k="ads" min="0" step="1"></label>
+    <label>Orders returned, %<input type="number" data-k="returns" min="0" step="1"></label>
+    <label>Orders shipped nationally, %<input type="number" data-k="national" min="0" max="100" step="5"></label>
+    <h3>Amazon fees and tax (secondary sources; verify in Seller Central)</h3>
+    <label>Referral fee threshold (₹)<input type="number" data-k="referral_threshold" min="0" step="50"></label>
+    <label>Referral fee above threshold, %<input type="number" data-k="referral_rate_above" min="0" step="0.5"></label>
+    <label>Closing fee, up to ₹300<input type="number" data-k="closing_0_300" min="0" step="1"></label>
+    <label>Closing fee, ₹301 to 500<input type="number" data-k="closing_301_500" min="0" step="1"></label>
+    <label>Closing fee, ₹501 to 1,000<input type="number" data-k="closing_501_1000" min="0" step="1"></label>
+    <label>Closing fee, above ₹1,000<input type="number" data-k="closing_above_1000" min="0" step="1"></label>
+    <label>Weight handling, first 500 g, regional<input type="number" data-k="wh_500g_regional" min="0" step="1"></label>
+    <label>Weight handling, first 500 g, national<input type="number" data-k="wh_500g_national" min="0" step="1"></label>
+    <label>Weight handling, 500 g to 1 kg, regional<input type="number" data-k="wh_1kg_regional" min="0" step="1"></label>
+    <label>Weight handling, 500 g to 1 kg, national<input type="number" data-k="wh_1kg_national" min="0" step="1"></label>
+    <label>Weight handling, 1 to 2 kg, regional<input type="number" data-k="wh_2kg_regional" min="0" step="1"></label>
+    <label>Weight handling, 1 to 2 kg, national<input type="number" data-k="wh_2kg_national" min="0" step="1"></label>
+    <label>Pick and pack (₹)<input type="number" data-k="pick_pack" min="0" step="1"></label>
+    <label>GST included in selling price, %<input type="number" data-k="gst_output" min="0" step="0.5"></label>
+  </div>
+</section>
+
+<section id="addstyle-section" hidden>
+  <h2>Add a bag style</h2>
+  <p class="muted">A new style gets its own tab. Cost and target can be changed later on that tab. <span id="addmsg" class="msg"></span></p>
+  <div class="controls">
+    <label>Style name<input type="text" id="a-name" placeholder="e.g. Small Shopper"></label>
+    <label>Size and weight (optional)<input type="text" id="a-size"></label>
+    <label>Landed cost per bag (₹)<input type="number" id="a-cost" min="0"></label>
+    <label>Target selling price (₹)<input type="number" id="a-target" min="1"></label>
+    <label>MRP printed (₹)<input type="number" id="a-mrp" min="1"></label>
+    <label>Chargeable weight slab<select id="a-slab"><option value="500g">Up to 500 g</option><option value="1kg" selected>500 g to 1 kg</option><option value="2kg">1 kg to 2 kg</option></select></label>
+    <label>Compare against<select id="a-market"><option value="tote">Totes</option><option value="toiletry">Toiletry bags and pouches</option></select></label>
+    <label>&nbsp;<button id="a-save" type="button" class="primary">Add style</button></label>
+  </div>
 </section>
 
 <section id="team-section" hidden>
@@ -112,6 +169,9 @@
   <div class="scroll"><table><thead><tr><th>Name</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody id="team"></tbody></table></div>
 </section>
 
+</div>
+
+<div data-tab="weaknesses" class="tab" hidden>
 <section class="weak" id="weaknesses">
   <h2>Weaknesses and loopholes in this model</h2>
   <p class="muted">Read these before acting on the numbers. Each one could move the recommendation.</p>
@@ -137,35 +197,11 @@
 </section>
 
 <section>
-  <h2>Where comparable products sell, and at what price</h2>
-  <p><label class="muted">Show market for <select id="market"><option value="tote">Totes (Medium and Large Shopper)</option><option value="toiletry">Toiletry bags and pouches</option></select></label></p>
-  <p class="muted">Each dot is one listing. Height is the "bought in past month" badge. Dot size is review count. The shaded band is the recommended range; the dashed line is the referral fee threshold.</p>
-  <div class="legend" id="legend-toiletry" hidden><span><i class="dot" style="background:#1f6f8b"></i>Nylon / polyester pouch</span><span><i class="dot" style="background:#3f8f5a"></i>Cotton / canvas pouch</span><span><i class="dot" style="background:#7a5aa6"></i>Premium pouch</span></div>
-  <div class="legend" id="legend-tote"><span><i class="dot" style="background:#1f6f8b"></i>Mass canvas tote</span><span><i class="dot" style="background:#c9772b"></i>Lunch / small hand-carry</span><span><i class="dot" style="background:#3f8f5a"></i>Design-led canvas</span><span><i class="dot" style="background:#7a5aa6"></i>Premium</span></div>
-  <div class="chart" id="map"></div>
-</section>
-
-<section>
-  <h2>Demand and discounting by price band</h2>
-  <div class="scroll"><table><thead><tr><th>Price band</th><th class="num">Listings</th><th class="num">With sales badge</th><th class="num">Units / month, at least</th><th class="num">Median MRP</th><th class="num">Median discount</th></tr></thead><tbody id="bands"></tbody></table></div>
-</section>
-
-<section>
-  <h2>Choosing the MRP</h2>
-  <p class="muted">Discount the shopper sees at each selling price. For the market selected above, the closest rivals show a median MRP of <span id="m-rivalmrp"></span> and a median discount of <span id="m-rivaldisc"></span>.</p>
-  <div class="scroll"><table><thead><tr><th>MRP printed</th><th class="num">At ₹699</th><th class="num">At ₹799</th><th class="num">At ₹899</th><th class="num">At ₹999</th></tr></thead><tbody id="mrpgrid"></tbody></table></div>
-</section>
-
-<section>
-  <h2>Comparable listings</h2>
-  <div class="scroll"><table><thead><tr><th>Brand</th><th>Product</th><th>Segment</th><th class="num">Price</th><th class="num">MRP</th><th class="num">Discount</th><th class="num">Rating</th><th class="num">Reviews</th><th class="num">Bought / month</th></tr></thead><tbody id="comps"></tbody></table></div>
-</section>
-
-<section>
   <h2>How profit is calculated</h2>
   <p class="muted">Profit per order shipped = (1 − return rate) × (price without GST − referral fee − closing fee − product cost) − weight handling − pick and pack − return shipping on returned orders − ad spend. GST on Amazon's fees is left out because it is claimable as input credit.</p>
   <p class="muted">Sources for fees: Zoutons reading of Amazon's rate card (5 Nov 2026); Blooprint fee guide (rates checked 16 Sep 2026); GST Council 56th meeting for the 5% rate on cotton hand bags (HSN 4202 22 20).</p>
 </section>
+</div>
 </div>
 </div>
 <script type="module" src="./src/main.js"></script>

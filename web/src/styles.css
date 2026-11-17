@@ -48,3 +48,9 @@ a { color:inherit; }
 td input { font:inherit; width:6.5em; padding:3px 5px; border:1px solid var(--line); border-radius:4px; }
 td select { font:inherit; }
 [hidden] { display:none !important; }
+
+.tabs { display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid var(--line); padding-bottom:0; margin-top:-14px; }
+.tabs button { border:1px solid transparent; border-bottom:none; border-radius:8px 8px 0 0; background:transparent; padding:8px 14px; color:var(--muted); }
+.tabs button.on { border-color:var(--line); background:var(--panel); color:var(--fg); font-weight:600; }
+.tab { display:flex; flex-direction:column; gap:34px; }
+.controls input[type=text] { font:inherit; color:var(--fg); background:#fff; border:1px solid var(--line); border-radius:6px; padding:6px 8px; width:100%; }

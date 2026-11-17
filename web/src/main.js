@@ -2,10 +2,10 @@ import './styles.css';
 import { api, DEMO } from './api.js';
 
 const $ = id => document.getElementById(id);
-let COMP = [], FEES = {}, REC = {}, STYLES = [], SALES = [], SNAPS = [], ASSUME = {}, ME = null;
+let COMP = [], FEES = {}, REC = {}, STYLES = [], SALES = [], SNAPS = [], ASSUME = {}, SMAP = {}, ME = null, CUR_TAB = 'overview';
 
 function boot() {
-const M0 = STYLES.find(s => s.id === 'medium') || STYLES[0];
+const M0 = STYLES.find(s => s.id === (CUR_TAB.startsWith('style:') ? CUR_TAB.slice(6) : 'medium')) || STYLES[0];
 const DEF = Object.assign({ style:M0.id, price:M0.target, cost:M0.cost, mrp:M0.mrp, slab:M0.slab, ads:15, returns:8, national:60 }, ASSUME, FEES);
 let S = Object.assign({}, DEF);
 const fmt = n => Math.round(n).toLocaleString('en-IN');
@@ -53,7 +53,10 @@ function drawCurve() {
   hit.addEventListener('pointerleave', () => { tip.hidden = true; hover.setAttribute('visibility','hidden'); });
 }
 
-const MKT = () => $('market').value;
+const SM = id => SMAP[id] || { market: 'tote', peers: 'Design-led canvas' };
+const MKT = () => SM(S.style).market;
+const recFor = id => (REC && REC[id] && typeof REC[id] === 'object') ? REC[id] : null;
+const peersOf = id => { const sm = SM(id); const all = COMP.filter(c => c.market === sm.market); const seg = all.filter(c => c.segment === sm.peers); return seg.length ? seg : all; };
 const CM = () => COMP.filter(c => c.market === MKT());
 const SEG = {'Nylon / polyester pouch':'#1f6f8b', 'Cotton / canvas pouch':'#3f8f5a', 'Premium pouch':'#7a5aa6', 'Mass canvas tote':'#1f6f8b', 'Lunch / small hand-carry':'#c9772b', 'Design-led canvas':'#3f8f5a', 'Premium':'#7a5aa6'};
 function drawMap() {
@@ -65,7 +68,7 @@ function drawMap() {
   levels.forEach(u => { svg.appendChild(el('line', {x1:m.l, x2:W-m.r, y1:y(u), y2:y(u), stroke:'#e6e9ec'})); svg.appendChild(el('text', {x:m.l-8, y:y(u)+4, 'text-anchor':'end'}, u ? u + '+' : 'No badge')); });
   [200,300,500,700,1000,1500,2500,4000].forEach(p => svg.appendChild(el('text', {x:x(p), y:H-m.b+16, 'text-anchor':'middle'}, INR(p))));
   svg.appendChild(el('text', {x:(m.l+W-m.r)/2, y:H-4, 'text-anchor':'middle'}, 'Selling price (log scale)'));
-  if (MKT() === 'tote') svg.appendChild(el('rect', {x:x(REC.low), width:x(REC.high)-x(REC.low), y:m.t, height:H-m.b-m.t, fill:'#9aa1a9', opacity:0.2}));
+  const rc = recFor(S.style); if (rc) svg.appendChild(el('rect', {x:x(rc.low), width:x(rc.high)-x(rc.low), y:m.t, height:H-m.b-m.t, fill:'#9aa1a9', opacity:0.2}));
   const th = Math.min(4000, Math.max(300, S.referral_threshold)); svg.appendChild(el('line', {x1:x(th), x2:x(th), y1:m.t, y2:H-m.b, stroke:'#5f6771', 'stroke-dasharray':'4 4'}));
   host.appendChild(svg); const tip = tipBox(host);
   CM().forEach((d,i) => { const c = el('circle', {cx:x(d.price), cy:y(d.units_badge) + ((i*37)%21) - 10, r:4 + Math.sqrt(d.reviews/9000)*12, fill:SEG[d.segment], 'fill-opacity':0.7, stroke:'#fff'}); c.addEventListener('pointermove', ev => showTip(host, tip, ev, [d.brand + ' — ' + d.product, INR(d.price) + ' (MRP ' + INR(d.mrp) + ', ' + d.discount_pct + '% off)', d.rating.toFixed(1) + ' stars, ' + fmt(d.reviews) + ' reviews', d.units_badge ? d.units_badge + '+ bought in past month' : 'No sales badge'])); c.addEventListener('pointerleave', () => { tip.hidden = true; }); svg.appendChild(c); });
@@ -75,16 +78,15 @@ function render() {
   const e = econ(S.price), dead = deadZoneEnd();
   $('t-dead').textContent = INR(dead);
   const SLAB = {'500g':'Up to 500 g', '1kg':'500 g to 1 kg', '2kg':'1 to 2 kg'};
-  const st = $('styles'); st.replaceChildren();
+  const st = $('styles'); st.replaceChildren(); const ledeParts = [];
   STYLES.forEach(s => { const cur = s.id === S.style; const cost = cur ? S.cost : s.cost, target = cur ? S.price : s.target, slab = cur ? S.slab : s.slab, mrp = cur ? S.mrp : s.mrp;
-    const p = econ(target, cost, slab).profit; const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Load'; btn.addEventListener('click', () => loadStyle(s.id));
+    const p = econ(target, cost, slab).profit; const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Open'; btn.addEventListener('click', () => showTab('style:' + s.id));
     const tr = row(st, [s.name, s.size, INR(cost), INR(target), SLAB[slab], INR(p), PCT(p/target*100), INR(econ(target+100, cost, slab).profit), INR(econ(999, cost, slab).profit), INR(mrp), PCT((1-target/mrp)*100), btn]); if (cur) tr.className = 'total';
-    $('l-'+s.id).textContent = INR(p); $('l-'+s.id).className = p < 0 ? 'bad' : ''; $('l-'+s.id+'-p').textContent = INR(target); });
+    ledeParts.push(INR(p) + ' on the ' + s.name + ' at ' + INR(target)); });
+  $('lede').textContent = 'At your target prices, each order shipped leaves ' + ledeParts.join(', ') + ', after Amazon fees, GST, ads, returns and product cost.';
   $('cur-style').textContent = STYLES.find(s => s.id === S.style).name;
-  $('c-sweet').textContent = INR(REC.sweet); $('c-mrp').textContent = INR(REC.mrp); $('c-disc').textContent = PCT((1 - REC.sweet/REC.mrp)*100); $('c-launch').textContent = INR(REC.launch); $('c-ceiling').textContent = INR(S.referral_threshold - 1);
-  const design = COMP.filter(c => c.segment === 'Design-led canvas');
-  $('c-rivaldisc').textContent = PCT(median(design.map(c => c.discount_pct)));
-  const peers = MKT() === 'tote' ? design : CM(); $('m-rivalmrp').textContent = INR(median(peers.map(c => c.mrp))); $('m-rivaldisc').textContent = PCT(median(peers.map(c => c.discount_pct)));
+  renderRec();
+  const peers = peersOf(S.style); $('m-rivalmrp').textContent = INR(median(peers.map(c => c.mrp))); $('m-rivaldisc').textContent = PCT(median(peers.map(c => c.discount_pct)));
   $('legend-tote').hidden = MKT() !== 'tote'; $('legend-toiletry').hidden = MKT() === 'tote';
   const tb = $('econ'); tb.replaceChildren();
   const retCost = e.r*(e.netRev - e.referral - e.closing - S.cost) + e.r*e.wh;
@@ -99,13 +101,12 @@ function render() {
   drawCurve(); drawMap(); fillComps(); renderDemand(); renderSales(); renderSnaps();
 }
 function fillComps() { const tb = $('comps'); tb.replaceChildren(); CM().sort((a,b) => b.units_badge - a.units_badge || a.price - b.price).forEach(c => { const a = document.createElement('a'); a.textContent = c.product; a.href = c.url; a.target = '_blank'; a.rel = 'noopener'; row(tb, [c.brand, a, c.segment, INR(c.price), INR(c.mrp), c.discount_pct + '%', c.rating.toFixed(1), fmt(c.reviews), c.units_badge ? c.units_badge + '+' : 'No badge']); }); }
-function loadStyle(id) { const s = STYLES.find(x => x.id === id); $('market').value = id === 'toiletry' ? 'toiletry' : 'tote'; S.style = id; S.price = s.target; S.cost = s.cost; S.slab = s.slab; S.mrp = s.mrp; syncInputs(); render(); }
-function syncInputs() { $('style').value = S.style; document.querySelectorAll('[data-k]').forEach(i => { i.value = S[i.dataset.k]; }); }
+function loadStyle(id) { const s = STYLES.find(x => x.id === id); S.style = id; S.price = s.target; S.cost = s.cost; S.slab = s.slab; S.mrp = s.mrp; syncInputs(); render(); }
+function syncInputs() { document.querySelectorAll('[data-k]').forEach(i => { i.value = S[i.dataset.k]; }); }
 document.querySelectorAll('[data-k]').forEach(i => i.oninput = (() => { const k = i.dataset.k; if (k === 'slab') S.slab = i.value; else { const v = Number(i.value); if (i.value === '' || !Number.isFinite(v) || v < 0) return; S[k] = v; } render(); }));
-$('style').replaceChildren(...STYLES.map(s => new Option(s.name, s.id))); $('s-style').replaceChildren(...STYLES.map(s => new Option(s.name, s.id)));
-$('style').onchange = () => loadStyle($('style').value);
+$('s-style').replaceChildren(...STYLES.map(s => new Option(s.name, s.id)));
 $('reset').onclick = () => { S = Object.assign({}, DEF); syncInputs(); render(); };
-$('market').onchange = render;
+
 
 function demandFit() {
   const s = STYLES.find(x => x.id === S.style), ref = s.target, cost = S.cost, slab = S.slab;
@@ -172,7 +173,54 @@ $('savedef').onclick = async () => {
   try { await api.saveDefaults({ fees, assumptions: { ads: S.ads, returns: S.returns, national: S.national }, style: { id: S.style, cost: S.cost, target: S.price, slab: S.slab, mrp: S.mrp } }); $('savemsg').textContent = 'Saved for the whole team.'; $('savemsg').className = 'msg ok'; await start(); } catch (x) { $('savemsg').textContent = x.message; $('savemsg').className = 'msg'; }
 };
 
-syncInputs(); render();
+
+function renderRec() {
+  const s = STYLES.find(x => x.id === S.style), sm = SM(S.style), peers = peersOf(S.style), sold = peers.filter(c => c.units_badge > 0), rc = recFor(S.style);
+  $('rec-style').textContent = s.name;
+  $('rec-peers').textContent = 'Closest rivals: ' + (peers.length && peers.every(c => c.segment === sm.peers) ? sm.peers.toLowerCase() : 'all tracked listings') + ' among ' + (sm.market === 'toiletry' ? 'toiletry bags and pouches' : 'totes') + ', read from Amazon.in. Figures update when the weekly competitor data is refreshed.';
+  $('r-count').textContent = sold.length; $('r-total').textContent = peers.length;
+  const ps = sold.map(c => c.price);
+  $('r-range').textContent = ps.length ? INR(Math.min(...ps)) + ' to ' + INR(Math.max(...ps)) : 'No data'; $('r-median').textContent = ps.length ? INR(median(ps)) : 'n/a';
+  $('r-mrp').textContent = peers.length ? INR(median(peers.map(c => c.mrp))) : 'No data'; $('r-disc').textContent = peers.length ? PCT(median(peers.map(c => c.discount_pct))) : 'n/a';
+  $('r-target').textContent = INR(s.target);
+  if (rc) {
+    $('r-sweet').textContent = INR(rc.sweet); $('r-conf').textContent = rc.confidence || 'Likely'; $('r-band').textContent = 'range ' + INR(rc.low) + ' to ' + INR(rc.high);
+    $('r-smrp').textContent = INR(rc.mrp); $('r-sdisc').textContent = PCT((1 - rc.sweet / rc.mrp) * 100) + ' off at the suggested price';
+    $('r-launch').textContent = INR(rc.launch);
+    const d = s.target - rc.sweet; $('r-gap').textContent = d === 0 ? 'same as the suggested price' : INR(Math.abs(d)) + (d < 0 ? ' below' : ' above') + ' the suggested price';
+    $('rec-note').textContent = rc.note || ''; $('rec-note').hidden = !rc.note;
+  } else {
+    ['r-sweet', 'r-smrp', 'r-launch'].forEach(id => { $(id).textContent = 'Not set'; }); $('r-conf').textContent = 'No suggestion'; $('r-band').textContent = ''; $('r-sdisc').textContent = ''; $('r-gap').textContent = '';
+    $('rec-note').textContent = 'No suggested price has been set for this style yet. The rival figures above are computed from the tracked listings.'; $('rec-note').hidden = false;
+  }
+}
+function showTab(key) {
+  CUR_TAB = key;
+  const panel = key.startsWith('style:') ? 'style' : key;
+  if (panel === 'style' && S.style !== key.slice(6)) loadStyle(key.slice(6));
+  document.querySelectorAll('[data-tab]').forEach(d => { d.hidden = d.dataset.tab !== panel; });
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.key === key));
+  window.scrollTo(0, 0);
+}
+function buildTabs() {
+  const defs = [['overview', 'Overview'], ...STYLES.map(s => ['style:' + s.id, s.name]), ['assumptions', 'Assumptions'], ['weaknesses', 'Weaknesses']];
+  $('tabs').replaceChildren(...defs.map(([k, label]) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.key = k; b.textContent = label; b.onclick = () => showTab(k); return b; }));
+  if (!defs.some(d => d[0] === CUR_TAB)) CUR_TAB = 'overview';
+}
+$('savedef2').hidden = ME.role !== 'admin';
+$('savedef2').onclick = async () => { await $('savedef').onclick(); $('savemsg2').textContent = $('savemsg').textContent; $('savemsg2').className = $('savemsg').className; };
+$('addstyle-section').hidden = ME.role !== 'admin';
+$('a-save').onclick = async () => {
+  const name = $('a-name').value.trim(), n = id => Number($(id).value), msg = (t, ok) => { $('addmsg').textContent = t; $('addmsg').className = 'msg' + (ok ? ' ok' : ''); };
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (!id || $('a-cost').value === '' || !(n('a-target') > 0) || !(n('a-mrp') > 0)) return msg('Fill in name, cost, target price and MRP.', false);
+  if (STYLES.some(s => s.id === id)) return msg('A style with that name already exists.', false);
+  if (n('a-mrp') < n('a-target')) return msg('MRP cannot be below the target price.', false);
+  const market = $('a-market').value;
+  try { await api.addStyle({ id, name, size: $('a-size').value.trim(), cost: n('a-cost'), target: n('a-target'), slab: $('a-slab').value, mrp: n('a-mrp'), sort: STYLES.length + 1 }, { market, peers: market === 'toiletry' ? 'Cotton / canvas pouch' : 'Design-led canvas' }); CUR_TAB = 'style:' + id; await start(); } catch (x) { msg(x.message, false); }
+};
+buildTabs();
+syncInputs(); render(); showTab(CUR_TAB);
 }
 
 async function start() {
@@ -181,7 +229,7 @@ async function start() {
   if (!ME || !ME.approved) return;
   $('who').textContent = ME.name + ' (' + ME.role + ')' + (DEMO ? ' · demo mode' : '');
   const d = await api.loadAll();
-  COMP = d.competitors; FEES = d.fees; REC = d.recommendation; STYLES = d.styles; SALES = d.sales; SNAPS = d.snapshots; ASSUME = d.assumptions;
+  COMP = d.competitors; FEES = d.fees; REC = d.recommendation; STYLES = d.styles; SALES = d.sales; SNAPS = d.snapshots; ASSUME = d.assumptions; SMAP = d.style_market || {};
   if (!STYLES.length) { $('app').textContent = 'No bag styles are set up yet. Ask the admin to run the setup.'; return; }
   boot();
 }
