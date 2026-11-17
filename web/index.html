@@ -57,15 +57,15 @@
   <h2><span id="rec-style"></span>: what the market data supports</h2>
   <p class="muted" id="rec-peers"></p>
   <div class="cards">
-    <div class="card"><div class="label">Closest rivals with a sales badge</div><div class="big" id="r-count"></div><span class="muted">of <span id="r-total"></span> tracked</span></div>
-    <div class="card"><div class="label">Their price range</div><div class="big" id="r-range" style="font-size:22px"></div><span class="muted">median <span id="r-median"></span></span></div>
-    <div class="card"><div class="label">Their median MRP</div><div class="big" id="r-mrp"></div><span class="muted">median discount <span id="r-disc"></span></span></div>
-    <div class="card"><div class="label">Suggested selling price</div><div class="big" id="r-sweet"></div><span class="tag" id="r-conf"></span> <span class="muted" id="r-band"></span></div>
-    <div class="card"><div class="label">Suggested MRP</div><div class="big" id="r-smrp"></div><span class="muted" id="r-sdisc"></span></div>
-    <div class="card"><div class="label">Suggested launch price</div><div class="big" id="r-launch"></div><span class="tag">Guessing</span></div>
+    <div class="card"><div class="label">Rivals selling 100+ a month</div><div class="big" id="r-count"></div><span class="muted">of <span id="r-total"></span> closest rivals tracked</span></div>
+    <div class="card"><div class="label">What those rivals charge</div><div class="big" id="r-range" style="font-size:22px"></div><span class="muted">lowest to highest</span></div>
+    <div class="card"><div class="label">Market price</div><div class="big" id="r-market"></div><span class="muted">the middle price of those rivals, rounded</span></div>
     <div class="card"><div class="label">Your target</div><div class="big" id="r-target"></div><span class="muted" id="r-gap"></span></div>
+    <div class="card"><div class="label">Launch price</div><div class="big" id="r-launch"></div><span class="tag">Guessing</span> <span class="muted" id="r-launch-why"></span></div>
+    <div class="card"><div class="label">Rivals' typical discount</div><div class="big" id="r-disc"></div><span class="muted" id="r-mrp-why"></span></div>
   </div>
   <p class="callout" id="rec-note"></p>
+  <p class="muted" id="rec-caveat"></p>
 </section>
 
 <section>
@@ -97,7 +97,7 @@
 
 <section>
   <h2>Where comparable products sell, and at what price</h2>
-  <p class="muted">Each dot is one listing. Height is the "bought in past month" badge. Dot size is review count. The shaded band is the recommended range; the dashed line is the referral fee threshold.</p>
+  <p class="muted">Each dot is one listing. Height is the "bought in past month" badge. Dot size is review count. The shaded band is the price range of rivals selling 100+ a month; the dashed line is the referral fee threshold.</p>
   <div class="legend" id="legend-toiletry" hidden><span><i class="dot" style="background:#1f6f8b"></i>Nylon / polyester pouch</span><span><i class="dot" style="background:#3f8f5a"></i>Cotton / canvas pouch</span><span><i class="dot" style="background:#7a5aa6"></i>Premium pouch</span></div>
   <div class="legend" id="legend-tote"><span><i class="dot" style="background:#1f6f8b"></i>Mass canvas tote</span><span><i class="dot" style="background:#c9772b"></i>Lunch / small hand-carry</span><span><i class="dot" style="background:#3f8f5a"></i>Design-led canvas</span><span><i class="dot" style="background:#7a5aa6"></i>Premium</span></div>
   <div class="chart" id="map"></div>

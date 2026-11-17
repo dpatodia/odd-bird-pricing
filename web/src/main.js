@@ -68,7 +68,7 @@ function drawMap() {
   levels.forEach(u => { svg.appendChild(el('line', {x1:m.l, x2:W-m.r, y1:y(u), y2:y(u), stroke:'#e6e9ec'})); svg.appendChild(el('text', {x:m.l-8, y:y(u)+4, 'text-anchor':'end'}, u ? u + '+' : 'No badge')); });
   [200,300,500,700,1000,1500,2500,4000].forEach(p => svg.appendChild(el('text', {x:x(p), y:H-m.b+16, 'text-anchor':'middle'}, INR(p))));
   svg.appendChild(el('text', {x:(m.l+W-m.r)/2, y:H-4, 'text-anchor':'middle'}, 'Selling price (log scale)'));
-  const rc = recFor(S.style); if (rc) svg.appendChild(el('rect', {x:x(rc.low), width:x(rc.high)-x(rc.low), y:m.t, height:H-m.b-m.t, fill:'#9aa1a9', opacity:0.2}));
+  const mkb = marketOf(S.style); const rc = mkb.ps.length ? { low: mkb.ps[0], high: mkb.ps[mkb.ps.length - 1] } : null; if (rc) svg.appendChild(el('rect', {x:x(rc.low), width:x(rc.high)-x(rc.low), y:m.t, height:H-m.b-m.t, fill:'#9aa1a9', opacity:0.2}));
   const th = Math.min(4000, Math.max(300, S.referral_threshold)); svg.appendChild(el('line', {x1:x(th), x2:x(th), y1:m.t, y2:H-m.b, stroke:'#5f6771', 'stroke-dasharray':'4 4'}));
   host.appendChild(svg); const tip = tipBox(host);
   CM().forEach((d,i) => { const c = el('circle', {cx:x(d.price), cy:y(d.units_badge) + ((i*37)%21) - 10, r:4 + Math.sqrt(d.reviews/9000)*12, fill:SEG[d.segment], 'fill-opacity':0.7, stroke:'#fff'}); c.addEventListener('pointermove', ev => showTip(host, tip, ev, [d.brand + ' — ' + d.product, INR(d.price) + ' (MRP ' + INR(d.mrp) + ', ' + d.discount_pct + '% off)', d.rating.toFixed(1) + ' stars, ' + fmt(d.reviews) + ' reviews', d.units_badge ? d.units_badge + '+ bought in past month' : 'No sales badge'])); c.addEventListener('pointerleave', () => { tip.hidden = true; }); svg.appendChild(c); });
@@ -174,25 +174,39 @@ $('savedef').onclick = async () => {
 };
 
 
+const to99 = x => Math.max(49, Math.round((x + 1) / 50) * 50 - 1);
+function marketOf(id) {
+  const sm = SM(id), peers = peersOf(id), strong = peers.filter(c => c.units_badge >= 100);
+  const ps = strong.map(c => c.price).sort((a, b) => a - b);
+  return { sm, peers, strong, ps, price: ps.length ? to99(median(ps)) : null, disc: strong.length ? median(strong.map(c => c.discount_pct)) : null };
+}
 function renderRec() {
-  const s = STYLES.find(x => x.id === S.style), sm = SM(S.style), peers = peersOf(S.style), sold = peers.filter(c => c.units_badge > 0), rc = recFor(S.style);
+  const s = STYLES.find(x => x.id === S.style), mk = marketOf(S.style), sm = mk.sm;
+  const cost = S.cost, slab = S.slab, target = S.price, profitAt = x => econ(x, cost, slab).profit;
+  const group = (mk.peers.length && mk.peers.every(c => c.segment === sm.peers) ? sm.peers.toLowerCase() : 'all tracked listings') + ' among ' + (sm.market === 'toiletry' ? 'toiletry bags and pouches' : 'totes');
   $('rec-style').textContent = s.name;
-  $('rec-peers').textContent = 'Closest rivals: ' + (peers.length && peers.every(c => c.segment === sm.peers) ? sm.peers.toLowerCase() : 'all tracked listings') + ' among ' + (sm.market === 'toiletry' ? 'toiletry bags and pouches' : 'totes') + ', read from Amazon.in. Figures update when the weekly competitor data is refreshed.';
-  $('r-count').textContent = sold.length; $('r-total').textContent = peers.length;
-  const ps = sold.map(c => c.price);
-  $('r-range').textContent = ps.length ? INR(Math.min(...ps)) + ' to ' + INR(Math.max(...ps)) : 'No data'; $('r-median').textContent = ps.length ? INR(median(ps)) : 'n/a';
-  $('r-mrp').textContent = peers.length ? INR(median(peers.map(c => c.mrp))) : 'No data'; $('r-disc').textContent = peers.length ? PCT(median(peers.map(c => c.discount_pct))) : 'n/a';
-  $('r-target').textContent = INR(s.target);
-  if (rc) {
-    $('r-sweet').textContent = INR(rc.sweet); $('r-conf').textContent = rc.confidence || 'Likely'; $('r-band').textContent = 'range ' + INR(rc.low) + ' to ' + INR(rc.high);
-    $('r-smrp').textContent = INR(rc.mrp); $('r-sdisc').textContent = PCT((1 - rc.sweet / rc.mrp) * 100) + ' off at the suggested price';
-    $('r-launch').textContent = INR(rc.launch);
-    const d = s.target - rc.sweet; $('r-gap').textContent = d === 0 ? 'same as the suggested price' : INR(Math.abs(d)) + (d < 0 ? ' below' : ' above') + ' the suggested price';
-    $('rec-note').textContent = (rc.note || '').replace(/Rs /g, '₹'); $('rec-note').hidden = !rc.note;
+  $('rec-peers').textContent = 'Closest rivals: ' + group + ', read from Amazon.in. Every figure in this section is calculated from those listings and from the price, cost and assumptions currently on this page.';
+  $('r-count').textContent = mk.strong.length; $('r-total').textContent = mk.peers.length;
+  $('r-target').textContent = INR(target);
+  const launch = to99(target * 0.9), pl = profitAt(launch), pt = profitAt(target);
+  $('r-launch').textContent = INR(launch);
+  $('r-launch-why').textContent = 'about 10% under your target of ' + INR(target) + ' for the first 30 to 60 days, to win early reviews. Leaves ' + INR(pl) + ' an order' + (pl <= 0 ? ', so it is not advised' : '') + '.';
+  if (!mk.ps.length) {
+    $('r-range').textContent = 'No data'; $('r-market').textContent = 'No data'; $('r-disc').textContent = 'No data'; $('r-mrp-why').textContent = ''; $('r-gap').textContent = 'no rivals selling 100+ a month to compare with';
+    $('rec-note').textContent = 'None of the tracked rivals for this style shows 100 or more sales a month, so there is no market price to compare your target with. At your target of ' + INR(target) + ' an order leaves ' + INR(pt) + '.';
   } else {
-    ['r-sweet', 'r-smrp', 'r-launch'].forEach(id => { $(id).textContent = 'Not set'; }); $('r-conf').textContent = 'No suggestion'; $('r-band').textContent = ''; $('r-sdisc').textContent = ''; $('r-gap').textContent = '';
-    $('rec-note').textContent = 'No suggested price has been set for this style yet. The rival figures above are computed from the tracked listings.'; $('rec-note').hidden = false;
+    const d = target - mk.price, pm = profitAt(mk.price);
+    $('r-range').textContent = INR(mk.ps[0]) + ' to ' + INR(mk.ps[mk.ps.length - 1]);
+    $('r-market').textContent = INR(mk.price);
+    $('r-gap').textContent = d === 0 ? 'the same as the market price' : INR(Math.abs(d)) + (d < 0 ? ' below' : ' above') + ' the market price of ' + INR(mk.price);
+    $('r-disc').textContent = PCT(mk.disc);
+    const mrpNeed = to99(target / (1 - mk.disc / 100));
+    $('r-mrp-why').textContent = 'off MRP. Your MRP of ' + INR(S.mrp) + ' shows ' + PCT((1 - target / S.mrp) * 100) + ' at your target; an MRP of ' + INR(mrpNeed) + ' would match the rivals.';
+    $('rec-note').textContent = mk.strong.length + ' of the ' + mk.peers.length + ' closest rivals show 100 or more sales a month. They charge ' + INR(mk.ps[0]) + ' to ' + INR(mk.ps[mk.ps.length - 1]) + ', with a middle price of ' + INR(mk.price) + '. Your target of ' + INR(target) + ' is ' + (d === 0 ? 'the same as that' : INR(Math.abs(d)) + (d < 0 ? ' below that' : ' above that')) + '. At your target an order leaves ' + INR(pt) + (d === 0 ? '.' : '; at the market price it would ' + (pm < 0 ? 'lose ' + INR(Math.abs(pm)) : 'leave ' + INR(pm)) + '.');
   }
+  $('rec-caveat').textContent = sm.market === 'toiletry'
+    ? 'Caution: these rivals are cotton and canvas pouches. Nylon organisers sell in far higher volume and are a different product. A middle price says what rivals charge, not what shoppers would pay for this bag.'
+    : 'Caution: rivals are not sorted by size, so the Large and Medium Shopper are compared with the same group, and most of those rivals are shoulder totes with a zip and pockets. A middle price says what rivals charge, not what shoppers would pay for this bag.';
 }
 function showTab(key) {
   if (key !== CUR_TAB) ['savemsg', 'savemsg2', 'addmsg'].forEach(id => { $(id).textContent = ''; });
